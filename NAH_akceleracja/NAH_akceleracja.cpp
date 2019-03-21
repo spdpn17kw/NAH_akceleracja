@@ -119,7 +119,7 @@ vector<vector<Task>> cmax_graph(vector<vector<Task>> macierz, vector<int> order,
 		else graph_pom[i].cmax_prawy = max(graph[position - 1][i].cmax_prawy, 0);
 		cmaxy[i] = graph_pom[i].cmax_prawy + graph[position][i].cmax_lewy;
 	}
-	
+	//
 	
 	int cmax = max(cmaxy.begin,cmaxy.end);
 	return Cm;
