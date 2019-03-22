@@ -24,7 +24,7 @@ public:
 		cmax_prawy = 0;
 		cmax_lewy = 0;
 	}
-	Task(int t, int e,int cp, int cl) {
+	Task(int t, int e, int cp, int cl) {
 		time = t;
 		ex = e;
 		cmax_prawy = cp;
@@ -55,18 +55,7 @@ vector<vector<Task>> read_data(int &number_of_ex, int &n_m) {
 	data.close();
 	return macierz;
 }
-//int cmax(vector<int> order, vector<vector<Task>> macierz, vector<vector<int>> Cm, int number_of_ex, int n_m) {
-//	int n_ex = number_of_ex + 1;
-//	for (int i = 0; i <= n_m; i++) Cm[0][i] = 0;
-//	for (int i = 0; i < n_ex; i++) Cm[i][0] = 0;
-//	for (int i = 1; i <= n_m; i++) {
-//		for (int j = 1; j <= number_of_ex; j++) {
-//			Cm[j][i] = max(Cm[j][i - 1], Cm[j - 1][i]) + macierz[order[j - 1] - 1][i - 1].time;
-//		}
-//
-//	}
-//	return Cm[n_ex - 1][n_m];
-//}
+
 vector<int> sort(vector<int> sum_time) { //sortuje zadania w kolejnosc najdluzszego czasu wykonywania na wszytskich maszynach
 	vector<int> order(sum_time.size());
 	vector<int>::iterator it;
@@ -83,48 +72,37 @@ vector<int> sort(vector<int> sum_time) { //sortuje zadania w kolejnosc najdluzsz
 vector<vector<Task>> cmax(vector<vector<Task>> macierz, vector<int> order) { //oblicza cmax dla kazdego zadania i kazdej maszyny i zwraca cmax dla ostatniego zadania na ostatniej maszynie
 	int n_ex = order.size() + 1;
 	int n_m = macierz[0].size() + 1;
-	vector<vector<Task>> Cm(n_ex+1, vector<Task>(n_m+1));
-	for (int i = 0; i <= n_m; i++) {
-		Cm[0][i].cmax_prawy = 0; Cm[0][i].cmax_lewy = 0;
-		Cm[n_ex][i].cmax_prawy = 0; Cm[n_ex][i].cmax_lewy = 0;
-	}
-	for (int i = 0; i <= n_ex; i++) {
-		Cm[i][0].cmax_prawy = 0; Cm[i][0].cmax_lewy = 0;
-		Cm[i][n_m].cmax_prawy = 0; Cm[i][n_m].cmax_lewy = 0;
-	}
+	vector<vector<Task>> Cm(n_ex + 1, vector<Task>(n_m + 1));
+	vector < vector<Task>> Cm_pom(order.size(), vector<Task>(n_m - 1));
 
-	for (int i = 1; i < n_m; i++) {
-		for (int j = 1; j < n_ex; j++) {
-			Cm[j][i].cmax_prawy = max(Cm[j][i - 1].cmax_prawy, Cm[j - 1][i].cmax_prawy) + macierz[order[j - 1] - 1][i - 1].time;
+
+	for (int i = 0; i <= n_m; i++) {
+		for (int j = 0; j <= n_ex; j++) {
+			if (i == 0 || i == n_m) {
+				Cm[j][0].cmax_prawy = 0; Cm[j][0].cmax_lewy = 0;
+				Cm[j][n_m].cmax_prawy = 0; Cm[j][n_m].cmax_lewy = 0;
+			}
+			else if (j == 0 || j == n_ex) {
+				Cm[0][i].cmax_prawy = 0; Cm[0][i].cmax_lewy = 0;
+				Cm[n_ex][i].cmax_prawy = 0; Cm[n_ex][i].cmax_lewy = 0;
+			}
+			else {
+				Cm[j][i].cmax_prawy = max(Cm[j][i - 1].cmax_prawy, Cm[j - 1][i].cmax_prawy) + macierz[order[j - 1] - 1][i - 1].time;
+				Cm[j][i]._order = order;
+			}
 		}
 	}
 
-	for (int i = n_m-1; i >=1; i--) {
-		for (int j = n_ex-1; j >=1; j--) {
+	for (int i = n_m - 1; i >= 1; i--) {
+		for (int j = n_ex - 1; j >= 1; j--) {
 			Cm[j][i].cmax_lewy = max(Cm[j][i + 1].cmax_lewy, Cm[j + 1][i].cmax_lewy) + macierz[order[j - 1] - 1][i - 1].time;
 		}
 	}
-	return Cm;
+	for (int j = 0; j < Cm_pom.size(); j++)
+		for (int i = 0; i < Cm_pom[0].size(); i++)
+			Cm_pom[j][i] = Cm[j + 1][i + 1];
+	return Cm_pom;
 }
-
-vector<vector<Task>> cmax_graph(vector<vector<Task>> macierz, vector<int> order, vector<vector<Task>> graph, int position) { //oblicza cmax dla kazdego zadania i kazdej maszyny i zwraca cmax dla ostatniego zadania na ostatniej maszynie
-	int n_ex = order.size() + 1;
-	int n_m = macierz[0].size() + 1;
-	vector<vector<Task>> Cm(n_ex + 1, vector<Task>(n_m + 1));
-	vector<Task> graph_pom;
-	vector<int> cmaxy;
-	for (int i = 0; i < n_m; i++) {
-		if (i > 0)
-			graph_pom[i].cmax_prawy = max(graph[position - 1][i].cmax_prawy, graph_pom[i - 1].cmax_prawy);
-		else graph_pom[i].cmax_prawy = max(graph[position - 1][i].cmax_prawy, 0);
-		cmaxy[i] = graph_pom[i].cmax_prawy + graph[position][i].cmax_lewy;
-	}
-	//
-	
-	int cmax = max(cmaxy.begin,cmaxy.end);
-	return Cm;
-}
-
 Task min_element(vector<Task> cmaxy, int size) { //wyszukuje najmniejszy cmax z vectora<param> i zwraca dla niego order
 	int min = 999999999;
 	vector<int> order(size + 1);
@@ -139,6 +117,33 @@ Task min_element(vector<Task> cmaxy, int size) { //wyszukuje najmniejszy cmax z 
 	}
 	return min_task;
 }
+Task max_element(vector<Task> cmaxy, int size) { //wyszukuje najmniejszy cmax z vectora<param> i zwraca dla niego order
+	int max = -1;
+	Task max_task;
+	for (int i = 0; i < size; i++) {
+		if (cmaxy[i].cmax_prawy > max) {
+			max = cmaxy[i].cmax_prawy;
+			max_task = cmaxy[i];
+		}
+	}
+	return max_task;
+}
+Task cmax_graph(vector<vector<Task>> macierz, vector<int> order, int position) { //oblicza cmax dla kazdego zadania i kazdej maszyny i zwraca cmax dla ostatniego zadania na ostatniej maszynie
+	int n_m = macierz[0].size();
+	vector<Task> graph_pom(n_m);
+	vector<Task> cmaxy(n_m);
+	for (int i = 0; i < n_m; i++) {
+		if (i > 0)
+			graph_pom[i].cmax_prawy = max(graph[position - 1][i].cmax_prawy, graph_pom[i - 1].cmax_prawy) + macierz[order[position] - 1][i].time;
+		else graph_pom[i].cmax_prawy = max(graph[position - 1][i].cmax_prawy, 0) + macierz[order[position] - 1][i].time;
+		cmaxy[i].cmax_prawy = graph_pom[i].cmax_prawy + graph[position][i].cmax_lewy;
+		cmaxy[i]._order = order;
+	}
+	Task cmax;
+	cmax = max_element(cmaxy, cmaxy.size());
+	return cmax;
+}
+
 void add_element(vector<int> &order, int element, int position) { //dodaje element do vectora na okreslonej pozycji
 	vector<int> pom_order = order;
 	order[position] = element;
@@ -152,19 +157,21 @@ vector<int> sort_cmax(vector<vector<Task>> macierz, vector<int> order) { //jak z
 	vector<Task> cmaxy(order.size());
 	for (int i = 0; i < order.size(); i++) {
 		vector<int> order_pompom = order_pom;
-		vector<vector<Task>> graph_pom;
 		for (int j = 0; j <= i; j++) {	//petla po pozycji
 			order_pom = order_pompom;
 			order_pom.resize(i + 1);
-			add_element(order_pom, order[i], j);	
-			if (i >= 2) {
-
+			add_element(order_pom, order[i], j);
+			if (j >= 1 && j < i) {
+				cmaxy[j] = cmax_graph(macierz, order_pom, j);
+				cmaxy[j]._order = order_pom;
 			}
-			cmaxy[j] = cmax(macierz, order_pom)[order_pom.size()][macierz[0].size()];
-			cmaxy[j]._order = order_pom;
+			else {
+				cmaxy[j] = cmax(macierz, order_pom)[order_pom.size() - 1][macierz[0].size() - 1];
+				cmaxy[j]._order = order_pom;
+			}
 		}
 		order_pom = min_element(cmaxy, i)._order;
-		graph_pom = cmax(macierz, order_pom);
+		graph = cmax(macierz, order_pom);
 	}
 	return order_pom;
 }
@@ -179,8 +186,9 @@ int main()
 
 	vector<int> order = sort(sum_time);
 
+
 	vector<int> order_naj = sort_cmax(macierz, order);
-	cout << "min cmax: " << cmax(macierz, order_naj)[order_naj.size()][macierz[0].size()].cmax_prawy << endl;
+	cout << "min cmax: " << cmax(macierz, order_naj)[order_naj.size() - 1][macierz[0].size() - 1].cmax_prawy << endl;
 	cout << "order_naj = ";
 	for (int i = 0; i < order_naj.size(); i++)
 		cout << order_naj[i] << " ";
